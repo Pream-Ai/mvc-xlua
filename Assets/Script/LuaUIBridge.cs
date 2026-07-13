@@ -1,5 +1,5 @@
-using UnityEngine;
 using XLua;
+using UnityEngine;
 using System;
 
 [LuaCallCSharp]
@@ -12,30 +12,29 @@ public class LuaUIBridge : MonoBehaviour
         public GameObject value;
     }
     public Injection[] injections;
-    public LuaTable _luaTable;
 
+    private LuaTable _luaTable; 
     private Action<LuaTable> _luaStart;
-    private Action<LuaTable> _luaDestroy;
+    private Action<LuaTable> _luaOnDestroy;
 
-    public void init(LuaTable luaTable)
+    public void Init(LuaTable luaTable)
     {
         _luaTable = luaTable;
         foreach (var injection in injections)
         {
-            _luaTable.Set(injection.name,injection.value);
+            _luaTable.Set(injection.name, injection.value);
         }
         _luaStart = _luaTable.Get<Action<LuaTable>>("Start");
-        _luaDestroy = _luaTable.Get<Action<LuaTable>>("OnDestroy");
+        _luaOnDestroy = _luaTable.Get<Action<LuaTable>>("OnDestroy");
     }
-    void Start()
+
+    private void Start() => _luaStart?.Invoke(_luaTable);
+
+    private void OnDestroy()
     {
-        _luaStart?.Invoke(_luaTable);
-    }
-    void OnDestroy()
-    {
-        _luaDestroy?.Invoke(_luaTable);
+        _luaOnDestroy?.Invoke(_luaTable);
         _luaStart = null;
-        _luaDestroy = null;
+        _luaOnDestroy = null;
         _luaTable?.Dispose();
         _luaTable = null;
     }
